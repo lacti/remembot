@@ -1,0 +1,19 @@
+service: remembot
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: production
+  region: ap-northeast-2
+
+functions:
+  webhook:
+    handler: handler.webhook
+    environment:
+      CHANNEL_SECRET: ${env:CHANNEL_SECRET}
+      CHANNEL_ACCESS_TOKEN: ${env:CHANNEL_ACCESS_TOKEN}
+    events:
+      - http:
+          path: webhook
+          method: post
+      - cloudwatchLog: '/remembot/webhook'
+
