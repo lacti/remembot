@@ -6,14 +6,24 @@ provider:
   region: ap-northeast-2
 
 functions:
-  webhook:
-    handler: handler.webhook
+  express:
+    handler: handler.express
     environment:
       CHANNEL_SECRET: ${env:CHANNEL_SECRET}
       CHANNEL_ACCESS_TOKEN: ${env:CHANNEL_ACCESS_TOKEN}
     events:
       - http:
+          path: status
+          method: get
+      - http:
+          path: push/{id}
+          method: post
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
           path: webhook
           method: post
-      - cloudwatchLog: '/remembot/webhook'
+      - cloudwatchLog: '/remembot'
 
