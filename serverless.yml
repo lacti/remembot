@@ -11,6 +11,8 @@ functions:
     environment:
       CHANNEL_SECRET: ${env:CHANNEL_SECRET}
       CHANNEL_ACCESS_TOKEN: ${env:CHANNEL_ACCESS_TOKEN}
+      DB_HOST: ${env:DB_HOST}
+      DB_PASSWORD: ${env:DB_PASSWORD}
     events:
       - http:
           path: status
