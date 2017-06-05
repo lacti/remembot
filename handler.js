@@ -72,6 +72,46 @@ app.post('/push/:id', (req, res) => {
     .catch(error => console.log(error));
 });
 
+let showQuestion = (event, sourceId) => {
+  return query(`SELECT * FROM word ORDER BY RAND() LIMIT 1`)
+    .then(result => {
+      const word = result[0];
+      console.log(`source=${sourceId}, word=${word}`);
+      query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
+      return client.replyMessage(event.replyToken, { type: 'text', text: word.word });
+    });
+};
+let responseWord = (event, sourceId, field, proc) => {
+  return query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
+    .then(result => {
+      const word = result[0];
+      console.log(`source=${sourceId}, word=${word}`);
+      let value = proc ? proc(word[field]) : word[field];
+      return client.replyMessage(event.replyToken, { type: 'text', text: value });
+    });
+};
+let showDescEn = (event, sourceId) => responseWord(event, sourceId, 'description_en');
+let showDescKr = (event, sourceId) => responseWord(event, sourceId, 'description_kr');
+let showExample = (event, sourceId) => responseWord(event, sourceId, 'examples', val => val.replace(/\|/g, '\n'));
+
+let commands = [
+  { cmds: ['문제', 'q'], handler: showQuestion },
+  { cmds: ['답', '영어', 'e', 'en'], handler: showDescEn },
+  { cmds: ['한글', '설명', 'k', 'kr'], handler: showDescKr },
+  { cmds: ['예시', '예', '?', 'ex'], handler: showExample }
+];
+
+let findHandler = text => {
+  for (let each of commands) {
+    for (let cmd of each.cmds) {
+      if (text.startsWith(cmd)) {
+        return each.handler;
+      }
+    }
+  }
+  return null;
+};
+
 function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
@@ -84,39 +124,14 @@ function handleEvent(event) {
   }
   console.log(event);
 
-  const cmd = event.message.text || '';
+  const text = event.message.text || '';
   const sourceId = event.source.roomId || event.source.groupId || event.source.userId;
-  if (cmd.startsWith('문제')) {
-    return query(`SELECT * FROM word ORDER BY RAND() LIMIT 1`)
-      .then(result => {
-        const word = result[0];
-        console.log(`source=${sourceId}, word=${word}`);
-        query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
-        return client.replyMessage(event.replyToken, { type: 'text', text: word.word });
-      });
-  } else if (cmd.startsWith('답')) {
-    return query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
-      .then(result => {
-        const word = result[0];
-        console.log(`source=${sourceId}, word=${word}`);
-        return client.replyMessage(event.replyToken, { type: 'text', text: word.description_en });
-      });
-  } else if (cmd.startsWith('한글')) {
-    return query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
-      .then(result => {
-        const word = result[0];
-        console.log(`source=${sourceId}, word=${word}`);
-        return client.replyMessage(event.replyToken, { type: 'text', text: word.description_kr });
-      });
-  } else if (cmd.startsWith('예시')) {
-    return query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
-      .then(result => {
-        const word = result[0];
-        console.log(`source=${sourceId}, word=${word}`);
-        return client.replyMessage(event.replyToken, { type: 'text', text: word.examples.replace(/\|/g, '\n') });
-      });
-  } else if (/^[a-zA-Z ]+$/.test(cmd)) {
-    return query(`SELECT * FROM word WHERE word="${cmd}"`)
+  const handler = findHandler(text);
+  if (handler) {
+    return handler(event, sourceId);
+  }
+  if (/^[a-zA-Z ]+$/.test(text)) {
+    return query(`SELECT * FROM word WHERE word="${text}"`)
       .then(result => {
         if (result && result[0]) {
           const word = result[0];
@@ -126,7 +141,7 @@ function handleEvent(event) {
         } else {
           return client.replyMessage(event.replyToken, {
             type: 'text',
-            text: `${cmd}에 대한 새로운 단어 추가는 아직 지원하지 않습니다.`,
+            text: `[${text}]에 대한 새로운 단어 추가는 아직 지원하지 않습니다.`,
           });
         }
       });
