@@ -52,10 +52,10 @@ let showDescKr = (event, sourceId) => responseWord(event, sourceId, 'description
 let showExample = (event, sourceId) => responseWord(event, sourceId, 'examples', val => val.replace(/\|/g, '\n'));
 
 let commands = [
-  { cmds: ['문제', 'q'], handler: showQuestion },
-  { cmds: ['답', '영어', 'e', 'en'], handler: showDescEn },
-  { cmds: ['한글', '설명', 'k', 'kr'], handler: showDescKr },
-  { cmds: ['예시', '예', '?', 'ex'], handler: showExample }
+  { cmds: ['문제', 'q', 'Q'], handler: showQuestion },
+  { cmds: ['답', '영어', 'e', 'E', 'en', 'En'], handler: showDescEn },
+  { cmds: ['한글', '설명', 'k', 'K', 'kr', 'Kr'], handler: showDescKr },
+  { cmds: ['예시', '예', '?', 'ex', 'Ex'], handler: showExample }
 ];
 
 let findHandler = text => {
