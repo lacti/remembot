@@ -7,35 +7,13 @@ const line = require('@line/bot-sdk');
 const app = express();
 const bodyParser = require('body-parser');
 const server = awsServerlessExpress.createServer(app);
+const db = require('./db.js');
 
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
   channelSecret: process.env.CHANNEL_SECRET,
 };
 const client = new line.Client(config);
-
-const mysql = require('mysql');
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: 'remembot',
-  password: process.env.DB_PASSWORD,
-  database: 'remembot',
-};
-
-const query = (sql) => new Promise((resolve, reject) => {
-  let db = mysql.createConnection(dbConfig);
-  db.connect();
-  db.query(sql, (err, result, fields) => {
-    db.end();
-    if (err) {
-      console.log('error occurred in database query');
-      console.log(err);
-      reject(err);
-    } else {
-      resolve(result);
-    }
-  });
-});
 
 app.use(line.middleware(config));
 app.use(bodyParser.json());
@@ -52,16 +30,16 @@ app.post('/webhook', (req, res) => {
 });
 
 let showQuestion = (event, sourceId) => {
-  return query(`SELECT * FROM word ORDER BY RAND() LIMIT 1`)
+  return db.query(`SELECT * FROM word ORDER BY RAND() LIMIT 1`)
     .then(result => {
       const word = result[0];
       console.log(`source=${sourceId}, word=${word}`);
-      query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
+      db.query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
       return client.replyMessage(event.replyToken, { type: 'text', text: word.word });
     });
 };
 let responseWord = (event, sourceId, field, proc) => {
-  return query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
+  return db.query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
     .then(result => {
       const word = result[0];
       console.log(`source=${sourceId}, word=${word}`);
@@ -110,12 +88,12 @@ function handleEvent(event) {
     return handler(event, sourceId);
   }
   if (/^[a-zA-Z ]+$/.test(text)) {
-    return query(`SELECT * FROM word WHERE word="${text}"`)
+    return db.query(`SELECT * FROM word WHERE word="${text}"`)
       .then(result => {
         if (result && result[0]) {
           const word = result[0];
           console.log(`source=${sourceId}, word=${word}`);
-          query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
+          db.query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
           return client.replyMessage(event.replyToken, { type: 'text', text: word.description_en });
         } else {
           return client.replyMessage(event.replyToken, {
