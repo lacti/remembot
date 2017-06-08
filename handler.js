@@ -51,27 +51,6 @@ app.post('/webhook', (req, res) => {
     .catch(error => console.log(error));
 });
 
-app.get('/status', (req, res) => {
-  res.json('ok');
-});
-
-app.post('/push/:id', (req, res) => {
-  console.log('id=' + req.params.id);
-  console.log(req.body);
-  console.log('text=' + req.body.text);
-  if (!req.body.text) {
-    res.json('no message');
-    return;
-  }
-  client
-    .pushMessage(req.params.id, {
-      type: 'text',
-      text: req.body.text,
-    })
-    .then(result => res.json(result))
-    .catch(error => console.log(error));
-});
-
 let showQuestion = (event, sourceId) => {
   return query(`SELECT * FROM word ORDER BY RAND() LIMIT 1`)
     .then(result => {
