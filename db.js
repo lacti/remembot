@@ -8,10 +8,10 @@ const dbConfig = {
   database: 'remembot',
 };
 
-exports.query = sql => new Promise((resolve, reject) => {
+exports.query = (sql, params) => new Promise((resolve, reject) => {
   let db = mysql.createConnection(dbConfig);
   db.connect();
-  db.query(sql, (err, result, fields) => {
+  db.query(sql, params, (err, result, fields) => {
     db.end();
     if (err) {
       console.log(`error occurred in database query=${sql}, error=${err}`);

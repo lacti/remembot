@@ -8,6 +8,7 @@ provider:
 functions:
   express:
     handler: handler.express
+    timeout: 30
     environment:
       CHANNEL_SECRET: ${env:CHANNEL_SECRET}
       CHANNEL_ACCESS_TOKEN: ${env:CHANNEL_ACCESS_TOKEN}

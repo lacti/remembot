@@ -11,7 +11,8 @@
     "elasticsearch": "^13.0.1",
     "express": "^4.15.3",
     "mysql": "github:mysqljs/mysql",
-    "request": "^2.81.0"
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

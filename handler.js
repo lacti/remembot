@@ -7,7 +7,7 @@ const line = require('@line/bot-sdk');
 const app = express();
 const bodyParser = require('body-parser');
 const server = awsServerlessExpress.createServer(app);
-const db = require('./db.js');
+const word = require('./word.js');
 
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -29,46 +29,6 @@ app.post('/webhook', (req, res) => {
     .catch(error => console.log(error));
 });
 
-let showQuestion = (event, sourceId) => {
-  return db.query(`SELECT * FROM word ORDER BY RAND() LIMIT 1`)
-    .then(result => {
-      const word = result[0];
-      console.log(`source=${sourceId}, word=${word}`);
-      db.query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
-      return client.replyMessage(event.replyToken, { type: 'text', text: word.word });
-    });
-};
-let responseWord = (event, sourceId, field, proc) => {
-  return db.query(`SELECT * FROM word w INNER JOIN last_word l ON w.word=l.word WHERE l.id="${sourceId}" LIMIT 1`)
-    .then(result => {
-      const word = result[0];
-      console.log(`source=${sourceId}, word=${word}`);
-      let value = proc ? proc(word[field]) : word[field];
-      return client.replyMessage(event.replyToken, { type: 'text', text: value });
-    });
-};
-let showDescEn = (event, sourceId) => responseWord(event, sourceId, 'description_en');
-let showDescKr = (event, sourceId) => responseWord(event, sourceId, 'description_kr');
-let showExample = (event, sourceId) => responseWord(event, sourceId, 'examples', val => val.replace(/\|/g, '\n'));
-
-let commands = [
-  { cmds: ['문제', 'q', 'Q'], handler: showQuestion },
-  { cmds: ['답', '영어', 'e', 'E', 'en', 'En'], handler: showDescEn },
-  { cmds: ['한글', '설명', 'k', 'K', 'kr', 'Kr'], handler: showDescKr },
-  { cmds: ['예시', '예', '?', 'ex', 'Ex'], handler: showExample }
-];
-
-let findHandler = text => {
-  for (let each of commands) {
-    for (let cmd of each.cmds) {
-      if (text.startsWith(cmd)) {
-        return each.handler;
-      }
-    }
-  }
-  return null;
-};
-
 function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
@@ -81,28 +41,19 @@ function handleEvent(event) {
   }
   console.log(event);
 
-  const text = event.message.text || '';
-  const sourceId = event.source.roomId || event.source.groupId || event.source.userId;
-  const handler = findHandler(text);
-  if (handler) {
-    return handler(event, sourceId);
-  }
-  if (/^[a-zA-Z ]+$/.test(text)) {
-    return db.query(`SELECT * FROM word WHERE word="${text}"`)
-      .then(result => {
-        if (result && result[0]) {
-          const word = result[0];
-          console.log(`source=${sourceId}, word=${word}`);
-          db.query(`REPLACE INTO last_word (id, word) VALUES ("${sourceId}", "${word.word}")`);
-          return client.replyMessage(event.replyToken, { type: 'text', text: word.description_en });
-        } else {
-          return client.replyMessage(event.replyToken, {
-            type: 'text',
-            text: `[${text}]에 대한 새로운 단어 추가는 아직 지원하지 않습니다.`,
-          });
+  const text = (event.message.text || '').trim().toLowerCase();
+  const id = event.source.roomId || event.source.groupId || event.source.userId;
+  return word.handle(text, id)
+    .then(ret => {
+      let texts = typeof ret === 'string' ? [ret] : ret;
+      return client.replyMessage(event.replyToken, texts.map(text => {
+        return {
+          type: 'text',
+          text: text
         }
-      });
-  }
+      }));
+    })
+    .catch(console.log);
 }
 
 module.exports.express = (event, context) =>
