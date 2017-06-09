@@ -216,6 +216,7 @@ let shortPos = pos => {
 
 let explain = word => {
   return findOrRegisterWord(word).then(w => {
+    const maxLength = 1200;
     if (w.exists === false) {
       return { exists: false };
     }
@@ -240,8 +241,10 @@ let explain = word => {
             descriptions.push(` - ${example}`);
           }
         }
-        // message exceeded
-        if (count++ >= 5) {
+        // check message exceeded
+        let length = descriptions.map(e => e.length).reduce((a, b) => a+b)
+          + guides.map(e => e.length).reduce((a, b) => a+b);
+        if (length >= maxLength) {
           break;
         }
       }

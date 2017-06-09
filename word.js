@@ -25,6 +25,7 @@ let handle = (text, id) => {
     })
     .catch(console.log);
   }
+  return Promise.resolve(null);
 };
 
 module.exports = {

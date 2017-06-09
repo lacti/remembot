@@ -45,6 +45,9 @@ function handleEvent(event) {
   const id = event.source.roomId || event.source.groupId || event.source.userId;
   return word.handle(text, id)
     .then(ret => {
+      if (ret === null) {
+        return true;
+      }
       let texts = typeof ret === 'string' ? [ret] : ret;
       return client.replyMessage(event.replyToken, texts.map(text => {
         return {
