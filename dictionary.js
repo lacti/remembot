@@ -242,8 +242,13 @@ let explain = word => {
           }
         }
         // check message exceeded
-        let length = descriptions.map(e => e.length).reduce((a, b) => a+b)
-          + guides.map(e => e.length).reduce((a, b) => a+b);
+        var length = 0;
+        if (descriptions.length > 0) {
+          length += descriptions.map(e => e.length).reduce((a, b) => a+b);
+        }
+        if (guides.length > 0) {
+          length += guides.map(e => e.length).reduce((a, b) => a+b);
+        }
         if (length >= maxLength) {
           break;
         }
