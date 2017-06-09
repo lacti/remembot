@@ -17,13 +17,15 @@ let handle = (text, id) => {
     }
   }
   if (/^[a-zA-Z ]+$/.test(text)) {
-    return dict.explain(text).then(w => {
-      if (w.exists !== undefined && w.exists === false) {
-        return `Cannot find a word: ${text}`;
-      }
-      return w;
-    })
-    .catch(console.log);
+    return dict
+      .explain(text)
+      .then(w => {
+        if (w.exists !== undefined && w.exists === false) {
+          return `Cannot find a word: ${text}`;
+        }
+        return w;
+      })
+      .catch(console.log);
   }
   return Promise.resolve(null);
 };
@@ -31,4 +33,3 @@ let handle = (text, id) => {
 module.exports = {
   handle
 };
-

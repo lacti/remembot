@@ -191,7 +191,8 @@ let findOrRegisterWord = word => {
 };
 
 let chooseRandomWord = () => {
-  return db.query('SELECT word FROM word_queue WHERE endic=1 ORDER BY RAND() LIMIT 1')
+  return db
+    .query('SELECT word FROM word_queue WHERE endic=1 ORDER BY RAND() LIMIT 1')
     .then(res => {
       return res[0].word;
     });
@@ -208,10 +209,10 @@ let shortPos = pos => {
     case 'adverb':
       return 'adv';
     case 'adjectiveadverb':
-      return 'adjv';      
+      return 'adjv';
     default:
       return pos;
-  };
+  }
 };
 
 let explain = word => {
@@ -244,10 +245,10 @@ let explain = word => {
         // check message exceeded
         var length = 0;
         if (descriptions.length > 0) {
-          length += descriptions.map(e => e.length).reduce((a, b) => a+b);
+          length += descriptions.map(e => e.length).reduce((a, b) => a + b);
         }
         if (guides.length > 0) {
-          length += guides.map(e => e.length).reduce((a, b) => a+b);
+          length += guides.map(e => e.length).reduce((a, b) => a + b);
         }
         if (length >= maxLength) {
           break;
@@ -278,7 +279,10 @@ let explain = word => {
 
 let index = prefix => {
   if (prefix === undefined || prefix.trim().length == 0) {
-    return db.query('SELECT DISTINCT LEFT(word, 1) AS first FROM remembot.word_queue WHERE endic=1')
+    return db
+      .query(
+        'SELECT DISTINCT LEFT(word, 1) AS first FROM remembot.word_queue WHERE endic=1'
+      )
       .then(res => {
         let firsts = [];
         for (let each of res) {
@@ -287,7 +291,10 @@ let index = prefix => {
         return firsts.join('\n');
       });
   }
-  return db.query(`SELECT word FROM word_queue WHERE endic=1 AND word LIKE "${prefix.trim()}%"`)
+  return db
+    .query(
+      `SELECT word FROM word_queue WHERE endic=1 AND word LIKE "${prefix.trim()}%"`
+    )
     .then(res => {
       let words = [];
       for (let each of res) {

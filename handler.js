@@ -11,7 +11,7 @@ const word = require('./word.js');
 
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.CHANNEL_SECRET,
+  channelSecret: process.env.CHANNEL_SECRET
 };
 const client = new line.Client(config);
 
@@ -19,7 +19,7 @@ app.use(line.middleware(config));
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
-    extended: true,
+    extended: true
   })
 );
 
@@ -43,18 +43,22 @@ function handleEvent(event) {
 
   const text = (event.message.text || '').trim().toLowerCase();
   const id = event.source.roomId || event.source.groupId || event.source.userId;
-  return word.handle(text, id)
+  return word
+    .handle(text, id)
     .then(ret => {
       if (ret === null) {
         return true;
       }
       let texts = typeof ret === 'string' ? [ret] : ret;
-      return client.replyMessage(event.replyToken, texts.map(text => {
-        return {
-          type: 'text',
-          text: text
-        }
-      }));
+      return client.replyMessage(
+        event.replyToken,
+        texts.map(text => {
+          return {
+            type: 'text',
+            text: text
+          };
+        })
+      );
     })
     .catch(console.log);
 }
